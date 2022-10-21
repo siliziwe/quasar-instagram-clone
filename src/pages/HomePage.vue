@@ -1,12 +1,15 @@
 <template>
   <q-page class="constrain q-pa-md">
-    <q-card
-     v-for="post in posts"
-     :key="post.id"
-     class="card-post q-mb-md"
-     bordered
-     flat
-     >
+
+    <div class="row q-col-gutter-lg">
+      <div class="col-12 col-sm-8">
+        <q-card
+        v-for="post in posts"
+        :key="post.id"
+        class="card-post q-mb-md"
+        bordered
+        flat
+        >
       <q-item>
         <q-item-section avatar>
           <q-avatar>
@@ -35,6 +38,26 @@
       </q-card-section>
 
     </q-card>
+      </div>
+      <div class="col-4 large-screen-only">
+        <q-item class="fixed">
+        <q-item-section avatar>
+          <q-avatar size="48px">
+            <img src="https://cdn.quasar.dev/img/boy-avatar.png">
+          </q-avatar>
+        </q-item-section>
+
+        <q-item-section>
+          <q-item-label
+          classs="text-bold">silly__pani</q-item-label>
+          <q-item-label caption>
+            Siliziwe Pani
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+      </div>
+    </div>
+
   </q-page>
 </template>
 
@@ -79,7 +102,7 @@ export default{
   },
   filters: {
     niceDate(value) {
-      return date.formatDate(value, 'MMMM D h:mmA')
+       date.formatDate(value, 'MMMM D h:mmA')
     }
   }
 }
