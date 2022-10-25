@@ -46,12 +46,15 @@
       <div class="row justify-center q-ma-md">
         <q-input
          v-model="post.location"
+         :loading="locationLoading"
          class="col col-sm-6"
          label="Location"
          dense
          >
          <template v-slot:append>
           <q-btn
+          v-if="!locationLoading && locationSupported"
+          @click="getLocation"
           round
           dense
           flat
@@ -82,13 +85,20 @@
         post: {
           id: uid(),
           caption: '',
-          location: '',
+tion: '',
           photo: null,
           date: Date.now()
         },
         imageCaptured: false,
         imageUpload: [],
-        hasCameraSupport: true
+        hasCameraSupport: true,
+        locationLoading: false
+      }
+    },
+    computed: {
+      locationSupported() {
+        if ('geolocation' in navigator) return true
+        return false
       }
     },
     methods: {
@@ -110,9 +120,10 @@
         context.drawImage(video, 0, 0, canvas.width, canvas.height,)
         this.imageCaptured = true
         this.post.photo = this.dataURItoBlob(canvas.toDataURL())
+        this.disableCamera()
       },
       captureImageFallback(file) {
-        this.post.photo = file 
+        this.post.photo = file
 
         let canvas = this.$refs.canvas
         let context = canvas.getContext('2d')
@@ -129,6 +140,11 @@
           img.src = event.target.result
         }
         reader.readAsDataURL(file)
+      },
+      disableCamera() {
+        this.$refs.video.srcObject.getVideoTracks().forEach(track => {
+          track.stop()
+        })
       },
        dataURItoBlob(dataURI) {
     // convert base64 to raw binary data held in a string
@@ -153,11 +169,45 @@
     var blob = new Blob([ab], {type: mimeString});
     return blob;
 
-  }
-
+      },
+      getLocation() {
+        this.locationLoading = true
+        navigator.geolocation.getCurrentPosition(position => {
+          this.getCityAndCountry(position)
+        }, err => {
+          console.log('err: ', err)
+        }, { timeout: 7000 })
+      },
+      getCityAndCountry(position) {
+        let apiUrl = `https://geocode.xyz/${ position.coords.latitude },${ position.coords.longitude }?json=1`
+        this.$axios.get(apiUrl).then(result => {
+          this.locationSuccess(result)
+        }).catch(err => {
+          this.locationError()
+        })
+      },
+      locationSuccess(result) {
+        this.post.location = result.data.city
+        if (result.data.country) {
+          this.post.location += `, ${result.data.country}`
+        }
+        this.locationLoading = false
+      },
+      locationError() {
+        this.$q.dialog({
+          title: 'Error',
+          message: 'Could not find your location'
+        })
+        this.locationLoading = false
+      }
     },
     mounted() {
       this.initCamera()
+    },
+    beforeDestroy() {
+      if (this.hasCameraSupport) {
+        this.disableCamera()
+      }
     }
   }
 </script>
